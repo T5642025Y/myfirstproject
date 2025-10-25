@@ -31,6 +31,7 @@
             background: rgba(0, 0, 0, 0.3);
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            position: relative;
         }
         
         h1 {
@@ -193,6 +194,7 @@
             cursor: pointer;
             transition: all 0.3s;
             box-shadow: 0 4px 0 #c53d3d;
+            position: relative;
         }
         
         button:hover {
@@ -248,6 +250,11 @@
         
         .info-log {
             background: rgba(255, 193, 7, 0.2);
+        }
+        
+        .tutorial-log {
+            background: rgba(111, 66, 193, 0.3);
+            border-left: 4px solid #6f42c1;
         }
         
         .stats {
@@ -311,6 +318,70 @@
             font-weight: bold;
         }
         
+        .tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .tutorial-box {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .tutorial-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .tutorial-content {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .tutorial-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .key-hint {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: gold;
+            color: black;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        .help-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #6f42c1;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #563d7c;
+        }
+        
         @media (max-width: 768px) {
             .game-area {
                 flex-direction: column;
@@ -320,6 +391,10 @@
                 flex-direction: column;
                 gap: 20px;
             }
+            
+            .controls {
+                flex-wrap: wrap;
+            }
         }
     </style>
 </head>
@@ -328,6 +403,7 @@
         <header>
             <h1>Monster Hunter: Creature Clash</h1>
             <p class="subtitle">Catch and battle with over 10,000 unique monsters!</p>
+            <div class="help-btn" id="help-btn">?</div>
         </header>
         
         <div class="stats">
@@ -413,14 +489,49 @@
         </div>
         
         <div class="controls">
-            <button id="hunt-btn">Hunt for Monsters</button>
-            <button id="catch-btn" class="catch-btn" disabled>Catch Monster</button>
-            <button id="battle-btn" disabled>Battle</button>
-            <button id="flee-btn">Flee</button>
+            <button id="hunt-btn">
+                Hunt for Monsters
+                <div class="key-hint">H</div>
+            </button>
+            <button id="catch-btn" class="catch-btn" disabled>
+                Catch Monster
+                <div class="key-hint">C</div>
+            </button>
+            <button id="battle-btn" disabled>
+                Battle
+                <div class="key-hint">B</div>
+            </button>
+            <button id="flee-btn">
+                Flee
+                <div class="key-hint">F</div>
+            </button>
         </div>
         
         <div class="log" id="battle-log">
             <div class="log-entry info-log">Welcome to Monster Hunter: Creature Clash! Click "Hunt for Monsters" to start your adventure.</div>
+        </div>
+    </div>
+
+    <!-- Tutorial Overlay -->
+    <div class="tutorial-overlay" id="tutorial-overlay">
+        <div class="tutorial-box">
+            <h2 class="tutorial-title">Welcome to Monster Hunter: Creature Clash!</h2>
+            <div class="tutorial-content" id="tutorial-content">
+                <p>In this game, you'll catch and battle with over 10,000 unique monsters!</p>
+                <p><strong>Controls:</strong></p>
+                <ul>
+                    <li><strong>H</strong> - Hunt for new monsters</li>
+                    <li><strong>C</strong> - Catch a selected monster</li>
+                    <li><strong>B</strong> - Battle with your monster</li>
+                    <li><strong>F</strong> - Flee from battle</li>
+                    <li><strong>1, 2, 3</strong> - Switch between tabs</li>
+                </ul>
+                <p>Click "Start Tutorial" to learn how to play, or "Skip Tutorial" to jump right in!</p>
+            </div>
+            <div class="tutorial-buttons">
+                <button id="skip-tutorial">Skip Tutorial</button>
+                <button id="start-tutorial">Start Tutorial</button>
+            </div>
         </div>
     </div>
 
@@ -449,8 +560,54 @@
             playerMonsters: [],
             selectedMonster: null,
             currentBattle: null,
-            activeTab: 'hunt'
+            activeTab: 'hunt',
+            tutorialStep: 0,
+            inTutorial: true
         };
+
+        // Tutorial steps
+        const TUTORIAL_STEPS = [
+            {
+                message: "Welcome to Monster Hunter: Creature Clash! Let's start by hunting for some monsters. Press H or click the 'Hunt for Monsters' button.",
+                action: 'hunt',
+                highlight: 'hunt-btn'
+            },
+            {
+                message: "Great! Now you can see some wild monsters. Click on one to select it.",
+                action: 'select',
+                highlight: 'wild-monsters'
+            },
+            {
+                message: "Perfect! Now that you've selected a monster, press C or click 'Catch Monster' to try to catch it.",
+                action: 'catch',
+                highlight: 'catch-btn'
+            },
+            {
+                message: "Excellent! You caught your first monster. Now let's try battling. Switch to the 'My Collection' tab by pressing 3 or clicking the tab.",
+                action: 'switch-tab',
+                targetTab: 'collection',
+                highlight: 'collection-tab'
+            },
+            {
+                message: "Now select one of your monsters from your collection.",
+                action: 'select',
+                highlight: 'my-monsters'
+            },
+            {
+                message: "Great! Now press B or click 'Battle' to start a fight with your selected monster.",
+                action: 'battle',
+                highlight: 'battle-btn'
+            },
+            {
+                message: "You're in a battle! Press B again to attack, or F to flee from the battle.",
+                action: 'battle-turn',
+                highlight: 'battle-btn'
+            },
+            {
+                message: "Congratulations! You've completed the tutorial. Now you're ready to explore the world of Monster Hunter on your own!",
+                action: 'complete'
+            }
+        ];
 
         // Generate a monster with unique ID and attributes
         function generateMonster(seed = null) {
@@ -594,9 +751,19 @@
             if (source === 'wild-monsters') {
                 document.getElementById('catch-btn').disabled = false;
                 document.getElementById('battle-btn').disabled = true;
+                
+                // Tutorial progression
+                if (gameState.inTutorial && gameState.tutorialStep === 1) {
+                    advanceTutorial();
+                }
             } else if (source === 'my-monsters') {
                 document.getElementById('catch-btn').disabled = true;
                 document.getElementById('battle-btn').disabled = false;
+                
+                // Tutorial progression
+                if (gameState.inTutorial && gameState.tutorialStep === 4) {
+                    advanceTutorial();
+                }
             }
             
             addLogEntry(`Selected ${monster.name} (Lvl ${monster.level})`, 'info');
@@ -608,6 +775,16 @@
             const entry = document.createElement('div');
             entry.className = `log-entry ${type}-log`;
             entry.textContent = message;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Add tutorial entry to battle log
+        function addTutorialEntry(message) {
+            const log = document.getElementById('battle-log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry tutorial-log';
+            entry.textContent = `Tutorial: ${message}`;
             log.appendChild(entry);
             log.scrollTop = log.scrollHeight;
         }
@@ -627,6 +804,11 @@
             
             addLogEntry("You used an Ultra Ball to hunt for monsters!", 'info');
             addLogEntry("Found new wild monsters! Click on one to try to catch it.", 'info');
+            
+            // Tutorial progression
+            if (gameState.inTutorial && gameState.tutorialStep === 0) {
+                advanceTutorial();
+            }
         }
 
         // Attempt to catch a monster
@@ -655,6 +837,11 @@
                 addLogEntry(`Congratulations! You caught ${monster.name}!`, 'player');
                 gameState.selectedMonster = null;
                 document.getElementById('catch-btn').disabled = true;
+                
+                // Tutorial progression
+                if (gameState.inTutorial && gameState.tutorialStep === 2) {
+                    advanceTutorial();
+                }
             } else {
                 addLogEntry(`Oh no! ${monster.name} broke free!`, 'enemy');
             }
@@ -698,6 +885,11 @@
             
             addLogEntry(`Battle started! Your ${gameState.selectedMonster.name} vs ${opponent.name}`, 'info');
             addLogEntry("Click 'Battle' to attack!", 'info');
+            
+            // Tutorial progression
+            if (gameState.inTutorial && gameState.tutorialStep === 5) {
+                advanceTutorial();
+            }
         }
 
         // Update battle UI with current HP and info
@@ -772,6 +964,13 @@
             }
             
             updateBattleUI();
+            
+            // Tutorial progression
+            if (gameState.inTutorial && gameState.tutorialStep === 6) {
+                // For tutorial, end the battle after one turn
+                endBattle(true);
+                advanceTutorial();
+            }
         }
 
         // Calculate damage between two monsters
@@ -839,6 +1038,11 @@
             // Update content based on tab
             if (tabName === 'collection') {
                 renderMonsters(gameState.playerMonsters, 'my-monsters', true);
+                
+                // Tutorial progression
+                if (gameState.inTutorial && gameState.tutorialStep === 3) {
+                    advanceTutorial();
+                }
             } else if (tabName === 'battle') {
                 const opponents = generateOpponents();
                 renderOpponents(opponents);
@@ -899,6 +1103,90 @@
             addLogEntry("Click 'Battle' to attack!", 'info');
         }
 
+        // Tutorial functions
+        function startTutorial() {
+            gameState.inTutorial = true;
+            gameState.tutorialStep = 0;
+            document.getElementById('tutorial-overlay').style.display = 'none';
+            addTutorialEntry(TUTORIAL_STEPS[0].message);
+            
+            // Highlight the first tutorial element
+            highlightTutorialElement(TUTORIAL_STEPS[0].highlight);
+        }
+
+        function advanceTutorial() {
+            gameState.tutorialStep++;
+            
+            if (gameState.tutorialStep >= TUTORIAL_STEPS.length) {
+                // Tutorial complete
+                gameState.inTutorial = false;
+                addTutorialEntry("Tutorial complete! You're now ready to play on your own.");
+                removeTutorialHighlight();
+                return;
+            }
+            
+            const step = TUTORIAL_STEPS[gameState.tutorialStep];
+            addTutorialEntry(step.message);
+            
+            // Highlight the current tutorial element
+            if (step.highlight) {
+                highlightTutorialElement(step.highlight);
+            } else {
+                removeTutorialHighlight();
+            }
+        }
+
+        function highlightTutorialElement(elementId) {
+            // Remove any existing highlights
+            removeTutorialHighlight();
+            
+            // Add highlight to the specified element
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.style.boxShadow = '0 0 0 3px gold';
+                element.style.position = 'relative';
+                element.style.zIndex = '10';
+            }
+        }
+
+        function removeTutorialHighlight() {
+            // Remove highlights from all elements
+            document.querySelectorAll('*').forEach(element => {
+                element.style.boxShadow = '';
+                element.style.zIndex = '';
+            });
+        }
+
+        function skipTutorial() {
+            gameState.inTutorial = false;
+            document.getElementById('tutorial-overlay').style.display = 'none';
+            addLogEntry("Tutorial skipped. You can always click the ? button for help.", 'info');
+        }
+
+        function showHelp() {
+            document.getElementById('tutorial-overlay').style.display = 'flex';
+            document.getElementById('tutorial-content').innerHTML = `
+                <p><strong>Game Controls:</strong></p>
+                <ul>
+                    <li><strong>H</strong> - Hunt for new monsters</li>
+                    <li><strong>C</strong> - Catch a selected monster</li>
+                    <li><strong>B</strong> - Battle with your monster</li>
+                    <li><strong>F</strong> - Flee from battle</li>
+                    <li><strong>1</strong> - Switch to Hunt tab</li>
+                    <li><strong>2</strong> - Switch to Battle tab</li>
+                    <li><strong>3</strong> - Switch to Collection tab</li>
+                </ul>
+                <p><strong>Gameplay Tips:</strong></p>
+                <ul>
+                    <li>Higher rarity monsters are harder to catch but stronger in battle</li>
+                    <li>Level up your monsters by winning battles</li>
+                    <li>You can battle other players in the Battle Arena</li>
+                    <li>Use Ultra Balls wisely - you'll find more by winning battles</li>
+                </ul>
+            `;
+            document.getElementById('tutorial-buttons').innerHTML = '<button id="close-help">Close Help</button>';
+        }
+
         // Initialize the game
         function initGame() {
             // Set up event listeners
@@ -937,13 +1225,73 @@
                 addLogEntry("Found new opponents!", 'info');
             });
             
+            // Tutorial buttons
+            document.getElementById('start-tutorial').addEventListener('click', startTutorial);
+            document.getElementById('skip-tutorial').addEventListener('click', skipTutorial);
+            document.getElementById('help-btn').addEventListener('click', showHelp);
+            
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => {
+                // Only process keys if not in tutorial overlay
+                if (document.getElementById('tutorial-overlay').style.display !== 'flex') {
+                    switch(e.key.toLowerCase()) {
+                        case 'h':
+                            huntMonsters();
+                            break;
+                        case 'c':
+                            if (!document.getElementById('catch-btn').disabled) {
+                                catchMonster();
+                            }
+                            break;
+                        case 'b':
+                            if (!document.getElementById('battle-btn').disabled) {
+                                if (gameState.currentBattle) {
+                                    battleTurn();
+                                } else {
+                                    startBattle();
+                                }
+                            }
+                            break;
+                        case 'f':
+                            if (gameState.currentBattle) {
+                                document.getElementById('flee-btn').click();
+                            }
+                            break;
+                        case '1':
+                            switchTab('hunt');
+                            break;
+                        case '2':
+                            switchTab('battle');
+                            break;
+                        case '3':
+                            switchTab('collection');
+                            break;
+                    }
+                }
+                
+                // Close help with Escape key
+                if (e.key === 'Escape') {
+                    document.getElementById('tutorial-overlay').style.display = 'none';
+                }
+            });
+            
+            // Close help button (dynamically added)
+            document.addEventListener('click', (e) => {
+                if (e.target && e.target.id === 'close-help') {
+                    document.getElementById('tutorial-overlay').style.display = 'none';
+                }
+            });
+            
             // Generate initial wild monsters
             const wildMonsters = generateWildMonsters();
             renderMonsters(wildMonsters, 'wild-monsters', true);
             
-            addLogEntry("Game initialized! Hunt for monsters to build your collection.", 'info');
+            // Show tutorial overlay on start
+            document.getElementById('tutorial-overlay').style.display = 'flex';
         }
 
         // Start the game when the page loads
         window.addEventListener('DOMContentLoaded', initGame);
-    </
+    </script>
+</body>
+</html>
