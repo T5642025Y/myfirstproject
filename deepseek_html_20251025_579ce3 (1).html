@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monster Hunter: Creature Clash</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .panel {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .monster-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .monster-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: transform 0.3s, background 0.3s;
+            cursor: pointer;
+        }
+        
+        .monster-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .monster-card.selected {
+            background: rgba(255, 215, 0, 0.3);
+            border: 2px solid gold;
+        }
+        
+        .monster-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .monster-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .monster-level {
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .monster-rarity {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .common {
+            background: #6c757d;
+        }
+        
+        .rare {
+            background: #007bff;
+        }
+        
+        .legendary {
+            background: #fd7e14;
+        }
+        
+        .mythic {
+            background: #e83e8c;
+        }
+        
+        .godly {
+            background: linear-gradient(45deg, #ffd700, #ff8c00, #ff4500);
+        }
+        
+        .battle-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+        
+        .battle-monster {
+            text-align: center;
+            width: 200px;
+        }
+        
+        .monster-battle-icon {
+            font-size: 5rem;
+            margin-bottom: 10px;
+        }
+        
+        .health-bar {
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: #28a745;
+            transition: width 0.5s;
+        }
+        
+        .vs {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background: #ff6b6b;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 0 #c53d3d;
+        }
+        
+        button:hover {
+            background: #ff5252;
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #c53d3d;
+        }
+        
+        button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            box-shadow: 0 4px 0 #495057;
+            cursor: not-allowed;
+        }
+        
+        .catch-btn {
+            background: #4ecdc4;
+            box-shadow: 0 4px 0 #2a9189;
+        }
+        
+        .catch-btn:hover {
+            background: #3db8af;
+            box-shadow: 0 2px 0 #2a9189;
+        }
+        
+        .log {
+            height: 150px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        
+        .player-log {
+            background: rgba(0, 123, 255, 0.2);
+        }
+        
+        .enemy-log {
+            background: rgba(220, 53, 69, 0.2);
+        }
+        
+        .info-log {
+            background: rgba(255, 193, 7, 0.2);
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .stat-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 120px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .rarity-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .rarity-filter {
+            padding: 5px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        
+        .rarity-filter.active {
+            opacity: 1;
+            font-weight: bold;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        
+        .tab.active {
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .game-area {
+                flex-direction: column;
+            }
+            
+            .battle-area {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Monster Hunter: Creature Clash</h1>
+            <p class="subtitle">Catch and battle with over 10,000 unique monsters!</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div>Monsters Caught</div>
+                <div class="stat-value" id="caught-count">0</div>
+            </div>
+            <div class="stat-box">
+                <div>Battles Won</div>
+                <div class="stat-value" id="battles-won">0</div>
+            </div>
+            <div class="stat-box">
+                <div>Ultra Balls</div>
+                <div class="stat-value" id="ultra-balls">5</div>
+            </div>
+            <div class="stat-box">
+                <div>Player Level</div>
+                <div class="stat-value" id="player-level">1</div>
+            </div>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tab active" id="hunt-tab">Hunt Monsters</div>
+            <div class="tab" id="battle-tab">Battle Arena</div>
+            <div class="tab" id="collection-tab">My Collection</div>
+        </div>
+        
+        <div class="game-area">
+            <div class="panel" id="hunt-panel">
+                <h2 class="panel-title">Wild Monsters</h2>
+                <div class="rarity-filters">
+                    <div class="rarity-filter common active" data-rarity="common">Common</div>
+                    <div class="rarity-filter rare" data-rarity="rare">Rare</div>
+                    <div class="rarity-filter legendary" data-rarity="legendary">Legendary</div>
+                    <div class="rarity-filter mythic" data-rarity="mythic">Mythic</div>
+                    <div class="rarity-filter godly" data-rarity="godly">Godly</div>
+                </div>
+                <div class="monster-grid" id="wild-monsters">
+                    <!-- Wild monsters will appear here -->
+                </div>
+            </div>
+            
+            <div class="panel" id="collection-panel" style="display: none;">
+                <h2 class="panel-title">My Monsters</h2>
+                <div class="monster-grid" id="my-monsters">
+                    <!-- Player's monsters will appear here -->
+                </div>
+            </div>
+            
+            <div class="panel" id="battle-panel" style="display: none;">
+                <h2 class="panel-title">Battle Arena</h2>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <button id="find-opponent-btn">Find Opponent</button>
+                </div>
+                <div class="monster-grid" id="opponents-list">
+                    <!-- Opponents will appear here -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="battle-area" id="battle-area" style="display: none;">
+            <div class="battle-monster">
+                <div class="monster-battle-icon" id="player-monster-icon">🐲</div>
+                <div class="monster-name" id="player-monster-name">Dragonite</div>
+                <div class="health-bar">
+                    <div class="health-fill" id="player-health" style="width: 100%"></div>
+                </div>
+                <div>HP: <span id="player-hp-text">100/100</span></div>
+                <div>Level: <span id="player-level-text">5</span></div>
+            </div>
+            
+            <div class="vs">VS</div>
+            
+            <div class="battle-monster">
+                <div class="monster-battle-icon" id="enemy-monster-icon">👾</div>
+                <div class="monster-name" id="enemy-monster-name">Alienoid</div>
+                <div class="health-bar">
+                    <div class="health-fill" id="enemy-health" style="width: 100%"></div>
+                </div>
+                <div>HP: <span id="enemy-hp-text">100/100</span></div>
+                <div>Level: <span id="enemy-level-text">5</span></div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="hunt-btn">Hunt for Monsters</button>
+            <button id="catch-btn" class="catch-btn" disabled>Catch Monster</button>
+            <button id="battle-btn" disabled>Battle</button>
+            <button id="flee-btn">Flee</button>
+        </div>
+        
+        <div class="log" id="battle-log">
+            <div class="log-entry info-log">Welcome to Monster Hunter: Creature Clash! Click "Hunt for Monsters" to start your adventure.</div>
+        </div>
+    </div>
+
+    <script>
+        // Game data and configuration
+        const RARITIES = {
+            common: { probability: 0.65, color: '#6c757d', minLevel: 1, maxLevel: 10 },
+            rare: { probability: 0.25, color: '#007bff', minLevel: 5, maxLevel: 20 },
+            legendary: { probability: 0.07, color: '#fd7e14', minLevel: 15, maxLevel: 35 },
+            mythic: { probability: 0.025, color: '#e83e8c', minLevel: 25, maxLevel: 50 },
+            godly: { probability: 0.005, color: 'linear-gradient(45deg, #ffd700, #ff8c00, #ff4500)', minLevel: 40, maxLevel: 100 }
+        };
+
+        const ELEMENT_TYPES = ['Fire', 'Water', 'Earth', 'Air', 'Lightning', 'Ice', 'Nature', 'Dark', 'Light', 'Metal'];
+        const MONSTER_PARTS = ['Fang', 'Claw', 'Wing', 'Tail', 'Horn', 'Scale', 'Eye', 'Spike', 'Fin', 'Shell'];
+        const MONSTER_PREFIXES = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta', 'Iota', 'Kappa'];
+        const MONSTER_SUFFIXES = ['Beast', 'Creature', 'Monster', 'Fiend', 'Brute', 'Terror', 'Horror', 'Abomination', 'Entity', 'Being'];
+
+        // Game state
+        let gameState = {
+            playerLevel: 1,
+            playerXP: 0,
+            ultraBalls: 5,
+            monstersCaught: 0,
+            battlesWon: 0,
+            playerMonsters: [],
+            selectedMonster: null,
+            currentBattle: null,
+            activeTab: 'hunt'
+        };
+
+        // Generate a monster with unique ID and attributes
+        function generateMonster(seed = null) {
+            const monsterId = seed || Math.floor(Math.random() * 10000) + 1;
+            const rng = new Math.seedrandom(monsterId.toString());
+            
+            // Determine rarity based on probabilities
+            let rarityRoll = rng();
+            let rarity = 'common';
+            let cumulativeProb = 0;
+            
+            for (const [rarityKey, data] of Object.entries(RARITIES)) {
+                cumulativeProb += data.probability;
+                if (rarityRoll <= cumulativeProb) {
+                    rarity = rarityKey;
+                    break;
+                }
+            }
+            
+            // Generate name
+            const element = ELEMENT_TYPES[Math.floor(rng() * ELEMENT_TYPES.length)];
+            const part = MONSTER_PARTS[Math.floor(rng() * MONSTER_PARTS.length)];
+            const prefix = MONSTER_PREFIXES[Math.floor(rng() * MONSTER_PREFIXES.length)];
+            const suffix = MONSTER_SUFFIXES[Math.floor(rng() * MONSTER_SUFFIXES.length)];
+            
+            const nameOptions = [
+                `${element} ${part}`,
+                `${prefix} ${suffix}`,
+                `${element} ${suffix}`,
+                `${prefix} ${part}`
+            ];
+            
+            const name = nameOptions[Math.floor(rng() * nameOptions.length)];
+            
+            // Generate stats based on rarity
+            const rarityData = RARITIES[rarity];
+            const level = Math.floor(rng() * (rarityData.maxLevel - rarityData.minLevel + 1)) + rarityData.minLevel;
+            
+            const baseHP = 50 + (level * 5);
+            const baseAttack = 10 + (level * 2);
+            const baseDefense = 5 + (level * 1.5);
+            const baseSpeed = 5 + (level * 1);
+            
+            // Add some randomness to stats
+            const hp = Math.floor(baseHP * (0.8 + rng() * 0.4));
+            const attack = Math.floor(baseAttack * (0.8 + rng() * 0.4));
+            const defense = Math.floor(baseDefense * (0.8 + rng() * 0.4));
+            const speed = Math.floor(baseSpeed * (0.8 + rng() * 0.4));
+            
+            // Generate icon (using emoji for simplicity)
+            const icons = ['🐉', '🐲', '🦖', '🦕', '🐊', '🦈', '🐅', '🐆', '🦅', '🦉', '🦇', '🐍', '🦎', '🦂', '🐢', '🦑', '🐙', '🦀', '🐜', '🦋'];
+            const icon = icons[Math.floor(rng() * icons.length)];
+            
+            return {
+                id: monsterId,
+                name: name,
+                rarity: rarity,
+                level: level,
+                hp: hp,
+                maxHp: hp,
+                attack: attack,
+                defense: defense,
+                speed: speed,
+                icon: icon,
+                element: element,
+                xp: Math.floor(level * 10 * (rarityData.probability * 100))
+            };
+        }
+
+        // Generate multiple wild monsters
+        function generateWildMonsters(count = 6) {
+            const monsters = [];
+            for (let i = 0; i < count; i++) {
+                monsters.push(generateMonster());
+            }
+            return monsters;
+        }
+
+        // Generate opponents for PvP
+        function generateOpponents(count = 6) {
+            const opponents = [];
+            for (let i = 0; i < count; i++) {
+                // Create a player-like opponent with multiple monsters
+                const opponent = {
+                    name: `Trainer ${Math.floor(Math.random() * 1000) + 1}`,
+                    level: Math.floor(Math.random() * 10) + 1,
+                    monsters: []
+                };
+                
+                // Give opponent 1-3 monsters
+                const monsterCount = Math.floor(Math.random() * 3) + 1;
+                for (let j = 0; j < monsterCount; j++) {
+                    // Generate monsters at appropriate level for opponent
+                    const monsterSeed = Math.floor(Math.random() * 10000) + 1;
+                    const monster = generateMonster(monsterSeed);
+                    // Scale monster level based on opponent level
+                    monster.level = Math.min(monster.level, opponent.level * 5);
+                    opponent.monsters.push(monster);
+                }
+                
+                opponents.push(opponent);
+            }
+            return opponents;
+        }
+
+        // Render monsters to the DOM
+        function renderMonsters(monsters, containerId, selectable = false) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            monsters.forEach(monster => {
+                const monsterCard = document.createElement('div');
+                monsterCard.className = 'monster-card';
+                if (selectable) {
+                    monsterCard.addEventListener('click', () => selectMonster(monster, containerId));
+                }
+                
+                monsterCard.innerHTML = `
+                    <div class="monster-icon">${monster.icon}</div>
+                    <div class="monster-name">${monster.name}</div>
+                    <div class="monster-level">Lvl: ${monster.level}</div>
+                    <div class="monster-rarity ${monster.rarity}">${monster.rarity.toUpperCase()}</div>
+                `;
+                
+                container.appendChild(monsterCard);
+            });
+        }
+
+        // Select a monster for battle or catching
+        function selectMonster(monster, source) {
+            gameState.selectedMonster = monster;
+            
+            // Update UI to show selection
+            document.querySelectorAll('.monster-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            event.currentTarget.classList.add('selected');
+            
+            // Enable appropriate buttons
+            if (source === 'wild-monsters') {
+                document.getElementById('catch-btn').disabled = false;
+                document.getElementById('battle-btn').disabled = true;
+            } else if (source === 'my-monsters') {
+                document.getElementById('catch-btn').disabled = true;
+                document.getElementById('battle-btn').disabled = false;
+            }
+            
+            addLogEntry(`Selected ${monster.name} (Lvl ${monster.level})`, 'info');
+        }
+
+        // Add entry to battle log
+        function addLogEntry(message, type = 'info') {
+            const log = document.getElementById('battle-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}-log`;
+            entry.textContent = message;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Hunt for new monsters
+        function huntMonsters() {
+            if (gameState.ultraBalls <= 0) {
+                addLogEntry("You're out of Ultra Balls! You can't hunt anymore.", 'info');
+                return;
+            }
+            
+            gameState.ultraBalls--;
+            document.getElementById('ultra-balls').textContent = gameState.ultraBalls;
+            
+            const wildMonsters = generateWildMonsters();
+            renderMonsters(wildMonsters, 'wild-monsters', true);
+            
+            addLogEntry("You used an Ultra Ball to hunt for monsters!", 'info');
+            addLogEntry("Found new wild monsters! Click on one to try to catch it.", 'info');
+        }
+
+        // Attempt to catch a monster
+        function catchMonster() {
+            if (!gameState.selectedMonster) {
+                addLogEntry("Please select a monster to catch first.", 'info');
+                return;
+            }
+            
+            const monster = gameState.selectedMonster;
+            const catchRate = calculateCatchRate(monster);
+            const success = Math.random() < catchRate;
+            
+            if (success) {
+                gameState.playerMonsters.push(monster);
+                gameState.monstersCaught++;
+                document.getElementById('caught-count').textContent = gameState.monstersCaught;
+                
+                // Remove from wild monsters
+                const wildMonstersContainer = document.getElementById('wild-monsters');
+                const selectedCard = wildMonstersContainer.querySelector('.selected');
+                if (selectedCard) {
+                    selectedCard.remove();
+                }
+                
+                addLogEntry(`Congratulations! You caught ${monster.name}!`, 'player');
+                gameState.selectedMonster = null;
+                document.getElementById('catch-btn').disabled = true;
+            } else {
+                addLogEntry(`Oh no! ${monster.name} broke free!`, 'enemy');
+            }
+        }
+
+        // Calculate catch rate based on monster rarity and player level
+        function calculateCatchRate(monster) {
+            const baseRates = {
+                common: 0.7,
+                rare: 0.5,
+                legendary: 0.3,
+                mythic: 0.15,
+                godly: 0.05
+            };
+            
+            const levelBonus = Math.min(gameState.playerLevel / monster.level, 1) * 0.3;
+            return baseRates[monster.rarity] + levelBonus;
+        }
+
+        // Start a battle
+        function startBattle() {
+            if (!gameState.selectedMonster) {
+                addLogEntry("Please select a monster to battle with first.", 'info');
+                return;
+            }
+            
+            // For PvE, generate a random opponent monster
+            const opponent = generateMonster();
+            
+            gameState.currentBattle = {
+                playerMonster: {...gameState.selectedMonster},
+                opponentMonster: opponent,
+                turn: 0
+            };
+            
+            // Show battle area
+            document.getElementById('battle-area').style.display = 'flex';
+            
+            // Update battle UI
+            updateBattleUI();
+            
+            addLogEntry(`Battle started! Your ${gameState.selectedMonster.name} vs ${opponent.name}`, 'info');
+            addLogEntry("Click 'Battle' to attack!", 'info');
+        }
+
+        // Update battle UI with current HP and info
+        function updateBattleUI() {
+            const battle = gameState.currentBattle;
+            if (!battle) return;
+            
+            // Player monster
+            document.getElementById('player-monster-icon').textContent = battle.playerMonster.icon;
+            document.getElementById('player-monster-name').textContent = battle.playerMonster.name;
+            document.getElementById('player-hp-text').textContent = `${battle.playerMonster.hp}/${battle.playerMonster.maxHp}`;
+            document.getElementById('player-level-text').textContent = battle.playerMonster.level;
+            
+            const playerHealthPercent = (battle.playerMonster.hp / battle.playerMonster.maxHp) * 100;
+            document.getElementById('player-health').style.width = `${playerHealthPercent}%`;
+            
+            // Opponent monster
+            document.getElementById('enemy-monster-icon').textContent = battle.opponentMonster.icon;
+            document.getElementById('enemy-monster-name').textContent = battle.opponentMonster.name;
+            document.getElementById('enemy-hp-text').textContent = `${battle.opponentMonster.hp}/${battle.opponentMonster.maxHp}`;
+            document.getElementById('enemy-level-text').textContent = battle.opponentMonster.level;
+            
+            const enemyHealthPercent = (battle.opponentMonster.hp / battle.opponentMonster.maxHp) * 100;
+            document.getElementById('enemy-health').style.width = `${enemyHealthPercent}%`;
+        }
+
+        // Execute a battle turn
+        function battleTurn() {
+            const battle = gameState.currentBattle;
+            if (!battle) return;
+            
+            battle.turn++;
+            
+            // Determine who attacks first based on speed
+            let firstAttacker, secondAttacker;
+            if (battle.playerMonster.speed >= battle.opponentMonster.speed) {
+                firstAttacker = { monster: battle.playerMonster, isPlayer: true };
+                secondAttacker = { monster: battle.opponentMonster, isPlayer: false };
+            } else {
+                firstAttacker = { monster: battle.opponentMonster, isPlayer: false };
+                secondAttacker = { monster: battle.playerMonster, isPlayer: true };
+            }
+            
+            // First attacker attacks
+            const firstDamage = calculateDamage(firstAttacker.monster, secondAttacker.monster);
+            secondAttacker.monster.hp = Math.max(0, secondAttacker.monster.hp - firstDamage);
+            
+            addLogEntry(
+                `${firstAttacker.monster.name} attacks for ${firstDamage} damage!`,
+                firstAttacker.isPlayer ? 'player' : 'enemy'
+            );
+            
+            // Check if battle is over
+            if (secondAttacker.monster.hp <= 0) {
+                endBattle(firstAttacker.isPlayer);
+                return;
+            }
+            
+            // Second attacker attacks
+            const secondDamage = calculateDamage(secondAttacker.monster, firstAttacker.monster);
+            firstAttacker.monster.hp = Math.max(0, firstAttacker.monster.hp - secondDamage);
+            
+            addLogEntry(
+                `${secondAttacker.monster.name} attacks for ${secondDamage} damage!`,
+                secondAttacker.isPlayer ? 'player' : 'enemy'
+            );
+            
+            // Check if battle is over
+            if (firstAttacker.monster.hp <= 0) {
+                endBattle(secondAttacker.isPlayer);
+                return;
+            }
+            
+            updateBattleUI();
+        }
+
+        // Calculate damage between two monsters
+        function calculateDamage(attacker, defender) {
+            const baseDamage = attacker.attack - (defender.defense / 2);
+            const variance = 0.8 + Math.random() * 0.4; // 0.8 to 1.2
+            const critical = Math.random() < 0.1 ? 1.5 : 1; // 10% crit chance
+            
+            return Math.max(1, Math.floor(baseDamage * variance * critical));
+        }
+
+        // End the battle and handle rewards
+        function endBattle(playerWon) {
+            const battle = gameState.currentBattle;
+            
+            if (playerWon) {
+                addLogEntry(`You won the battle!`, 'player');
+                gameState.battlesWon++;
+                document.getElementById('battles-won').textContent = gameState.battlesWon;
+                
+                // Gain XP
+                const xpGained = battle.opponentMonster.xp;
+                gameState.playerXP += xpGained;
+                addLogEntry(`Gained ${xpGained} XP!`, 'info');
+                
+                // Check for level up
+                const xpNeeded = gameState.playerLevel * 100;
+                if (gameState.playerXP >= xpNeeded) {
+                    gameState.playerLevel++;
+                    gameState.playerXP = 0;
+                    document.getElementById('player-level').textContent = gameState.playerLevel;
+                    addLogEntry(`Level up! You are now level ${gameState.playerLevel}!`, 'info');
+                }
+                
+                // Chance to get an Ultra Ball
+                if (Math.random() < 0.3) {
+                    gameState.ultraBalls++;
+                    document.getElementById('ultra-balls').textContent = gameState.ultraBalls;
+                    addLogEntry(`Found an Ultra Ball!`, 'info');
+                }
+            } else {
+                addLogEntry(`You lost the battle...`, 'enemy');
+            }
+            
+            // Reset battle state
+            gameState.currentBattle = null;
+            document.getElementById('battle-area').style.display = 'none';
+            document.getElementById('battle-btn').disabled = true;
+        }
+
+        // Switch between game tabs
+        function switchTab(tabName) {
+            // Update tab UI
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Show/hide panels
+            document.getElementById('hunt-panel').style.display = 'none';
+            document.getElementById('collection-panel').style.display = 'none';
+            document.getElementById('battle-panel').style.display = 'none';
+            document.getElementById(`${tabName}-panel`).style.display = 'block';
+            
+            // Update content based on tab
+            if (tabName === 'collection') {
+                renderMonsters(gameState.playerMonsters, 'my-monsters', true);
+            } else if (tabName === 'battle') {
+                const opponents = generateOpponents();
+                renderOpponents(opponents);
+            }
+            
+            gameState.activeTab = tabName;
+        }
+
+        // Render opponents for PvP
+        function renderOpponents(opponents) {
+            const container = document.getElementById('opponents-list');
+            container.innerHTML = '';
+            
+            opponents.forEach(opponent => {
+                const opponentCard = document.createElement('div');
+                opponentCard.className = 'monster-card';
+                opponentCard.addEventListener('click', () => startPvPBattle(opponent));
+                
+                // Get the opponent's strongest monster for display
+                const strongestMonster = opponent.monsters.reduce((strongest, current) => 
+                    current.level > strongest.level ? current : strongest, opponent.monsters[0]);
+                
+                opponentCard.innerHTML = `
+                    <div class="monster-name">${opponent.name}</div>
+                    <div class="monster-level">Level: ${opponent.level}</div>
+                    <div class="monster-icon">${strongestMonster.icon}</div>
+                    <div>Monsters: ${opponent.monsters.length}</div>
+                `;
+                
+                container.appendChild(opponentCard);
+            });
+        }
+
+        // Start a PvP battle
+        function startPvPBattle(opponent) {
+            if (!gameState.selectedMonster) {
+                addLogEntry("Please select a monster from your collection first.", 'info');
+                return;
+            }
+            
+            // For PvP, randomly select one of the opponent's monsters
+            const opponentMonster = opponent.monsters[Math.floor(Math.random() * opponent.monsters.length)];
+            
+            gameState.currentBattle = {
+                playerMonster: {...gameState.selectedMonster},
+                opponentMonster: opponentMonster,
+                turn: 0,
+                isPvP: true
+            };
+            
+            // Show battle area
+            document.getElementById('battle-area').style.display = 'flex';
+            
+            // Update battle UI
+            updateBattleUI();
+            
+            addLogEntry(`PvP Battle started! Your ${gameState.selectedMonster.name} vs ${opponent.name}'s ${opponentMonster.name}`, 'info');
+            addLogEntry("Click 'Battle' to attack!", 'info');
+        }
+
+        // Initialize the game
+        function initGame() {
+            // Set up event listeners
+            document.getElementById('hunt-btn').addEventListener('click', huntMonsters);
+            document.getElementById('catch-btn').addEventListener('click', catchMonster);
+            document.getElementById('battle-btn').addEventListener('click', battleTurn);
+            document.getElementById('flee-btn').addEventListener('click', () => {
+                if (gameState.currentBattle) {
+                    addLogEntry("You fled from the battle!", 'info');
+                    gameState.currentBattle = null;
+                    document.getElementById('battle-area').style.display = 'none';
+                } else {
+                    addLogEntry("There's no battle to flee from!", 'info');
+                }
+            });
+            
+            // Tab switching
+            document.getElementById('hunt-tab').addEventListener('click', () => switchTab('hunt'));
+            document.getElementById('collection-tab').addEventListener('click', () => switchTab('collection'));
+            document.getElementById('battle-tab').addEventListener('click', () => switchTab('battle'));
+            
+            // Rarity filters
+            document.querySelectorAll('.rarity-filter').forEach(filter => {
+                filter.addEventListener('click', function() {
+                    document.querySelectorAll('.rarity-filter').forEach(f => f.classList.remove('active'));
+                    this.classList.add('active');
+                    // In a full implementation, this would filter the displayed monsters
+                    addLogEntry(`Filtering by ${this.dataset.rarity} monsters`, 'info');
+                });
+            });
+            
+            // Find opponent button
+            document.getElementById('find-opponent-btn').addEventListener('click', () => {
+                const opponents = generateOpponents();
+                renderOpponents(opponents);
+                addLogEntry("Found new opponents!", 'info');
+            });
+            
+            // Generate initial wild monsters
+            const wildMonsters = generateWildMonsters();
+            renderMonsters(wildMonsters, 'wild-monsters', true);
+            
+            addLogEntry("Game initialized! Hunt for monsters to build your collection.", 'info');
+        }
+
+        // Start the game when the page loads
+        window.addEventListener('DOMContentLoaded', initGame);
+    </
